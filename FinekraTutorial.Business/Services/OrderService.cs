@@ -23,7 +23,7 @@ public class OrderService<TContext> : BaseService<Order>, IOrderService
     {
         var order = await _repository.GetAllFiltered().FirstOrDefaultAsync(p => p.UserDetailId == userId && !p.IsCompleted);
         var user = await _userRepository.Get(userId);
-        if(order == null)
+        if (order == null)
         {
             await _repository.AddAsync(new Order
             {
@@ -40,8 +40,8 @@ public class OrderService<TContext> : BaseService<Order>, IOrderService
 
     public async Task<bool> CompleteOrder(Guid userId)
     {
-        var order = await _repository.GetAllFiltered().Include(p=>p.OrderDetails).FirstOrDefaultAsync(p=>p.UserDetailId==userId && !p.IsCompleted && p.OrderDetails.Any());
-        if(order == null)
+        var order = await _repository.GetAllFiltered().Include(p => p.OrderDetails).FirstOrDefaultAsync(p => p.UserDetailId == userId && !p.IsCompleted && p.OrderDetails.Any());
+        if (order == null)
         {
             return false;
         }
@@ -53,7 +53,7 @@ public class OrderService<TContext> : BaseService<Order>, IOrderService
     public async Task DeleteProductFromBasket(Guid productId, Guid userId)
     {
         var order = await _repository.GetAllFiltered(p => p.UserDetailId == userId && !p.IsCompleted).FirstOrDefaultAsync();
-        var orderProduct = await _detailRepository.GetAllFiltered(p => p.OrderId == order.Id && p.PerfumeId == productId).Include(p=>p.Perfume).FirstOrDefaultAsync();
+        var orderProduct = await _detailRepository.GetAllFiltered(p => p.OrderId == order.Id && p.PerfumeId == productId).Include(p => p.Perfume).FirstOrDefaultAsync();
         if (orderProduct != null)
         {
             if (orderProduct.Count > 1)
@@ -64,14 +64,17 @@ public class OrderService<TContext> : BaseService<Order>, IOrderService
             }
             else
             {
-                await _detailRepository.Delete(orderProduct.Id);
+                if (orderProduct.Count > 0)
+                {
+                    await _detailRepository.Delete(orderProduct.Id);
+                }
             }
         }
     }
 
     public async Task<List<OrderDetail>> GetMyOrder(Guid userId)
     {
-        var orderId = await _repository.GetAllFiltered(p=>p.UserDetailId == userId && !p.IsCompleted).Select(p=>p.Id).FirstOrDefaultAsync();
-        return await _detailRepository.GetAllFiltered(p => p.OrderId == orderId).Include(p=>p.Perfume).ToListAsync();
+        var orderId = await _repository.GetAllFiltered(p => p.UserDetailId == userId && !p.IsCompleted).Select(p => p.Id).FirstOrDefaultAsync();
+        return await _detailRepository.GetAllFiltered(p => p.OrderId == orderId).Include(p => p.Perfume).ToListAsync();
     }
 }
